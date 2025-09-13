@@ -1,5 +1,7 @@
 # **Trail Running Race Congestion Simulator**
 
+[Japanese/日本語](README_JA.md)
+
 ## **Overview**
 
 This project provides a suite of Python scripts to simulate and analyze runner congestion in trail running races using GPX course data and the Monte Carlo method.
