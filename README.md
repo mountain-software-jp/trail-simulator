@@ -44,20 +44,28 @@ First, convert the race GPX file into CSV format.
 
 **Command**
 
+```shell
 python gpx_parser.py [path/to/your/gpx_file.gpx]
+```
 
 **Example**
 
+```shell
 python gpx_parser.py kagaspa100.gpx
+```
 
-Output  
+Output:
+
+```shell
 A file named something like kagaspa100_course_data.csv will be generated. This file is the foundation for the subsequent simulation and analysis.
+```
 
 ### **Step 2: Run Simulation with Congestion Model (single_track_simulation.py)**
 
 Next, run the congestion simulation using the generated course data.
 
-Preparation  
+#### Preparation: 
+
 Open single_track_simulation.py and edit the single_track_definitions list to match your race course.  
 
 ```shell
