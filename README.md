@@ -142,19 +142,22 @@ Analyze the congestion peaks at aid stations using the simulation results.
 
 Preparation  
 Open aid_station_analysis.py and edit the aid_stations_km list to specify the locations (in km) you want to analyze.  
-# Specify the aid station locations (km) to be analyzed  
-aid_stations_km = [25.5, 51.3, 75.8]
 
 **Command**
 
 ```shell
-python aid_station_analysis.py [simulation_results.csv]
+python aid_station_analysis.py [simulation_results.csv] [options]
 ```
+
+**Options**
+
+* -s, --stations: List of aid station locations in km, separated by spaces. (default: 25 50 75 95)
+* -o, --output: Output image file name. (default: aid_station_congestion.png)
 
 **Example**
 
 ```shell
-python aid_station_analysis.py congestion_sim_results_1500runners.csv
+python aid_station_analysis.py congestion_sim_results_500runners.csv --stations 17 26 46 63 80 96
 ``` 
 
 Output  
