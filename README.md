@@ -132,7 +132,7 @@ python runner_distribution_analysis.py [simulation_results.csv] [course_data.csv
 ```shell
 python runner_distribution_analysis.py congestion_sim_results_1500runners.csv your_race_course_data.csv --times 15 20
 
-Output  
+# Output  
 An image file like runner_distribution_snapshot_1500runners_active.png will be created.
 ```
 
@@ -156,7 +156,7 @@ python aid_station_analysis.py [simulation_results.csv] [options]
 ```shell
 python aid_station_analysis.py congestion_sim_results_1500runners.csv --stations 30 60 90
 
-Output  
+# Output  
 A graph image like aid_station_congestion.png will be created.
 ```
 
