@@ -6,6 +6,8 @@ It particularly aims for more realistic congestion prediction by modeling the tr
 
 *Runner distribution for a 1500-participant race at 15 and 20 hours (active runners only).*
 
+![](./sample/runner_distribution_snapshot_500runners_active.png)
+
 ## **Workflow**
 
 The toolset consists of the following four steps (scripts):
