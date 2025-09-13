@@ -99,6 +99,8 @@ python single_track_simulation.py [course_data.csv] [options]
 * -p, --avg_pace: Average pace in minutes per km (Default: 10.0)  
 * -s, --std_dev: Standard deviation of pace (Default: 1.5)  
 * -t, --time_limit: Race time limit in hours (Default: 24)
+* --wave_groups: Number of groups for wave start (default: 1, for a mass start)
+* --wave_interval: Start interval between waves in minutes (default: 0)
 
 **Example (Simulating a race with 1500 runners and an average pace of 12 min/km)**
 
