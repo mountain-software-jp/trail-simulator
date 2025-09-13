@@ -6,88 +6,89 @@ import os
 
 def parse_gpx(file_path):
     """
-    GPXファイルを解析し、コース情報をDataFrameとして返す。
+    Parses a GPX file and returns the course information as a DataFrame.
 
     Args:
-        file_path (str): GPXファイルへのパス
+        file_path (str): Path to the GPX file.
 
     Returns:
-        pandas.DataFrame: コース情報を含むDataFrame
+        pandas.DataFrame: DataFrame containing the course information.
     """
     try:
         with open(file_path, 'r', encoding='utf-8') as gpx_file:
             gpx = gpxpy.parse(gpx_file)
     except FileNotFoundError:
-        print(f"エラー: ファイル '{file_path}' が見つかりません。")
+        print(f"Error: File '{file_path}' not found.")
         return None
     except Exception as e:
-        print(f"GPXファイルの解析中にエラーが発生しました: {e}")
+        print(f"An error occurred while parsing the GPX file: {e}")
         return None
 
     points = []
     for track in gpx.tracks:
         for segment in track.segments:
             for point in segment.points:
-                # GPXファイル内のdistance拡張タグから距離を取得
+                # Get the distance from the 'distance' extension tag in the GPX file
                 distance_extension = [ext for ext in point.extensions if 'distance' in ext.tag]
                 distance = float(distance_extension[0].text) if distance_extension else 0
                 points.append({
                     'latitude': point.latitude,
                     'longitude': point.longitude,
                     'elevation': point.elevation,
-                    'distance': distance # スタートからの累積距離
+                    'distance': distance # Cumulative distance from the start
                 })
 
     if not points:
-        print("警告: GPXファイルからトラックポイントが見つかりませんでした。")
+        print("Warning: No track points found in the GPX file.")
         return pd.DataFrame()
 
     df = pd.DataFrame(points)
     
-    # 各区間の距離と標高差、勾配を計算
+    # Calculate the distance, elevation difference, and gradient for each segment
     df['segment_distance'] = df['distance'].diff().fillna(0)
     df['elevation_diff'] = df['elevation'].diff().fillna(0)
     
-    # 距離が0の区間でのゼロ除算を避ける
+    # Avoid division by zero for segments with no distance
     df['gradient'] = np.where(df['segment_distance'] > 0, (df['elevation_diff'] / df['segment_distance']) * 100, 0)
 
     return df
 
 def main(gpx_filepath):
     """
-    メイン処理。GPXファイルを解析し、CSVとして保存する。
+    Main process. Parses a GPX file and saves it as a CSV.
     """
-    print(f"'{gpx_filepath}' を解析しています...")
+    print(f"Parsing '{gpx_filepath}'...")
     course_df = parse_gpx(gpx_filepath)
 
     if course_df is not None and not course_df.empty:
-        # 出力ファイル名を生成 (例: my_race.gpx -> my_race_course_data.csv)
+        # Generate the output filename (e.g., my_race.gpx -> my_race_course_data.csv)
         base_filename = os.path.splitext(os.path.basename(gpx_filepath))[0]
         output_csv_path = f"{base_filename}_course_data.csv"
         
-        # 結果をCSVファイルとして保存
+        # Save the results as a CSV file
         course_df.to_csv(output_csv_path, index=False)
 
-        # 最初の数行を表示して確認
-        print("\nコースデータの最初の5行:")
+        # Print the first few rows to confirm
+        print("\nFirst 5 rows of the course data:")
         print(course_df.head())
-        print(f"\nコース全長: {course_df['distance'].iloc[-1] / 1000:.2f} km")
-        print(f"データは '{output_csv_path}' に保存されました。")
+        print(f"\nTotal course length: {course_df['distance'].iloc[-1] / 1000:.2f} km")
+        print(f"Data has been saved to '{output_csv_path}'.")
 
 if __name__ == '__main__':
-    # コマンドライン引数を解析するための設定
+    # Setup for parsing command-line arguments
     parser = argparse.ArgumentParser(
         description='Parse a GPX file and save its track data as a CSV file.'
     )
-    # 必須の引数としてGPXファイルのパスを追加
+    # Add the GPX file path as a required argument
     parser.add_argument(
         'gpx_filepath', 
         type=str, 
         help='Path to the GPX file to be parsed.'
     )
     
-    # 引数を解析
+    # Parse the arguments
     args = parser.parse_args()
     
-    # メイン処理を呼び出し
+    # Call the main process
     main(args.gpx_filepath)
+
