@@ -3,16 +3,30 @@ import pandas as pd
 import numpy as np
 import argparse
 import os
+import math
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """
+    Calculates the distance between two points on Earth using the Haversine formula.
+    """
+    R = 6371000  # Earth radius in meters
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+
+    a = math.sin(delta_phi / 2) * math.sin(delta_phi / 2) + \
+        math.cos(phi1) * math.cos(phi2) * \
+        math.sin(delta_lambda / 2) * math.sin(delta_lambda / 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    distance = R * c
+    return distance
 
 def parse_gpx(file_path):
     """
     Parses a GPX file and returns the course information as a DataFrame.
-
-    Args:
-        file_path (str): Path to the GPX file.
-
-    Returns:
-        pandas.DataFrame: DataFrame containing the course information.
+    It handles GPX files with or without the <distance> extension.
     """
     try:
         with open(file_path, 'r', encoding='utf-8') as gpx_file:
@@ -25,18 +39,35 @@ def parse_gpx(file_path):
         return None
 
     points = []
+    cumulative_distance = 0.0
+    previous_point = None
+
     for track in gpx.tracks:
         for segment in track.segments:
             for point in segment.points:
-                # Get the distance from the 'distance' extension tag in the GPX file
+                # First, try to get distance from the extension tag
                 distance_extension = [ext for ext in point.extensions if 'distance' in ext.tag]
-                distance = float(distance_extension[0].text) if distance_extension else 0
+                
+                if distance_extension:
+                    # Use the pre-calculated distance if available
+                    distance = float(distance_extension[0].text)
+                else:
+                    # If not available, calculate it from lat/lon
+                    if previous_point:
+                        segment_dist = haversine_distance(
+                            previous_point.latitude, previous_point.longitude,
+                            point.latitude, point.longitude
+                        )
+                        cumulative_distance += segment_dist
+                    distance = cumulative_distance
+                
                 points.append({
                     'latitude': point.latitude,
                     'longitude': point.longitude,
                     'elevation': point.elevation,
-                    'distance': distance # Cumulative distance from the start
+                    'distance': distance 
                 })
+                previous_point = point
 
     if not points:
         print("Warning: No track points found in the GPX file.")
@@ -91,4 +122,3 @@ if __name__ == '__main__':
     
     # Call the main process
     main(args.gpx_filepath)
-
