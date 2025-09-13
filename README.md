@@ -32,7 +32,9 @@ To run these tools, you need the following Python libraries:
 
 You can install them all with the following command:
 
+```shell
 pip install gpxpy pandas numpy matplotlib
+```
 
 ## **Usage**
 
