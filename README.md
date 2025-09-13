@@ -6,7 +6,16 @@ It particularly aims for more realistic congestion prediction by modeling the tr
 
 *Runner distribution for a 1500-participant race at 15 and 20 hours (active runners only).*
 
+## Samples 
+
+### The graph of the runners distribution snapshot
+
 ![](./sample/runner_distribution_snapshot_500runners_active.png)
+
+
+### The graph of aid stations congestion
+
+![](./sample/aid_station_congestion.png)
 
 ## **Workflow**
 
