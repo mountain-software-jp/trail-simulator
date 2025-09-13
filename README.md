@@ -43,7 +43,9 @@ To run these scripts, you will need the following Python libraries:
 
 You can install them all with a single command:
 
+```shell
 pip install gpxpy pandas numpy matplotlib
+```
 
 ## **How to Use**
 
@@ -57,14 +59,18 @@ First, convert your race's GPX file into a CSV format that the other scripts can
 
 **Command**
 
+```shell
 python gpx_parser.py [path/to/your/gpx_file.gpx]
+```
 
 **Example**
 
+```shell
 python gpx_parser.py your_race.gpx
 
-Output  
+# Output  
 A file named your_race_course_data.csv will be created.
+```
 
 ### **Step 2: Run the Congestion Simulation**
 
@@ -72,15 +78,20 @@ Next, use the course data CSV from Step 1 to run the main simulation.
 
 Preparation (Optional)  
 Before running, you can edit single_track_simulation.py to define the single-track sections specific to your race course.  
+
+```python
 # Customize these definitions to match your actual race course  
 single_track_definitions = [  
     {'range_km': (5, 8), 'capacity': 2},    # From 5km to 8km, capacity is 2 runners  
     {'range_km': (20, 22.5), 'capacity': 1}, # From 20km to 22.5km, capacity is 1 runner  
 ]
+```
 
 **Command**
 
+```shell
 python single_track_simulation.py [course_data.csv] [options]
+```
 
 **Options**
 
@@ -91,10 +102,12 @@ python single_track_simulation.py [course_data.csv] [options]
 
 **Example (Simulating a race with 1500 runners and an average pace of 12 min/km)**
 
+```shell
 python single_track_simulation.py your_race_course_data.csv --runners 1500 --avg_pace 12.0
 
-Output  
+# Output  
 A CSV file like congestion_sim_results_1500runners.csv will be generated.
+```
 
 ### **Step 3: Analyze the Simulation Results**
 
@@ -106,7 +119,9 @@ This script shows where runners are distributed on the course at specific moment
 
 **Command**
 
+```shell
 python runner_distribution_analysis.py [simulation_results.csv] [course_data.csv] [options]
+```
 
 **Options**
 
@@ -114,10 +129,12 @@ python runner_distribution_analysis.py [simulation_results.csv] [course_data.csv
 
 **Example (Analyzing the distribution at 15 and 20 hours into the race)**
 
+```shell
 python runner_distribution_analysis.py congestion_sim_results_1500runners.csv your_race_course_data.csv --times 15 20
 
 Output  
 An image file like runner_distribution_snapshot_1500runners_active.png will be created.
+```
 
 #### **Aid Station Congestion Analysis**
 
@@ -125,7 +142,9 @@ This script analyzes the peak congestion times at specific locations (checkpoint
 
 **Command**
 
+```shell
 python aid_station_analysis.py [simulation_results.csv] [options]
+```
 
 **Options**
 
@@ -134,10 +153,12 @@ python aid_station_analysis.py [simulation_results.csv] [options]
 
 **Example (Analyzing congestion at the 30km, 60km, and 90km marks)**
 
+```shell
 python aid_station_analysis.py congestion_sim_results_1500runners.csv --stations 30 60 90
 
 Output  
 A graph image like aid_station_congestion.png will be created.
+```
 
 ## **License**
 
