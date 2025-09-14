@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import argparse
+import json
 
 def define_course_capacity(course_df, single_track_sections):
     """Adds a 'capacity' column to the course data DataFrame."""
@@ -102,36 +103,114 @@ def run_congestion_simulation(num_runners, avg_pace_min_per_km, std_dev_pace, ti
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run a trail running simulation with a congestion model.')
     parser.add_argument('course_data_csv', type=str, help='Path to the course data CSV file (generated from GPX)')
+    parser.add_argument('-o', '--output', type=str, help='Path to the output CSV file')
     parser.add_argument('-n', '--runners', type=int, default=500, help='Number of runners (default: 500)')
     parser.add_argument('-p', '--avg_pace', type=float, default=10.0, help='Overall average pace in minutes/km (default: 10.0)')
     parser.add_argument('-s', '--std_dev', type=float, default=1.5, help='Standard deviation of pace (default: 1.5)')
     parser.add_argument('-t', '--time_limit', type=int, default=24, help='Race time limit in hours (default: 24)')
-    # --- Add arguments for wave start ---
+    
+    # --- Arguments for wave start ---
     parser.add_argument('--wave_groups', type=int, default=1, help='Number of groups for wave start (default: 1, for a mass start)')
     parser.add_argument('--wave_interval', type=int, default=0, help='Start interval between waves in minutes (default: 0)')
 
+    # --- Arguments for single track definition ---
+    st_group = parser.add_mutually_exclusive_group()
+    st_group.add_argument('--single_track_config', type=str, help='Path to a JSON file defining single track sections.')
+    st_group.add_argument('--simple_single_track', nargs=3, action='append', metavar=('START_PERC', 'END_PERC', 'CAPACITY'),
+                          help='Define a single track section by course percentage. Can be used multiple times. E.g., --simple_single_track 10 20 2')
+    st_group.add_argument('--random_single_track_percentage', nargs=2, metavar=('PERCENTAGE', 'CAPACITY'),
+                          help='Define single track sections randomly based on a total percentage of the course. E.g., 5 1 for 5%% with capacity 1.')
+
     args = parser.parse_args()
 
-    # --- Definition of single track sections ---
-    # Customize these definitions to match your actual race course
-    single_track_definitions = [
-        {'range_km': (5, 8), 'capacity': 2},    # From 5km to 8km, capacity is 2 runners
-        {'range_km': (20, 22.5), 'capacity': 1}, # From 20km to 22.5km, capacity is 1 runner
-    ]
-
+    # --- Load course data ---
     try:
         course_data = pd.read_csv(args.course_data_csv)
     except FileNotFoundError:
         print(f"Error: File '{args.course_data_csv}' not found.")
         exit()
 
+    # --- Determine single track definitions ---
+    single_track_definitions = []
+    if args.simple_single_track:
+        print("Defining single tracks based on course percentage...")
+        total_distance_km = course_data['distance'].iloc[-1] / 1000
+        for start_perc, end_perc, capacity in args.simple_single_track:
+            start_km = total_distance_km * (float(start_perc) / 100)
+            end_km = total_distance_km * (float(end_perc) / 100)
+            single_track_definitions.append({
+                'range_km': (start_km, end_km),
+                'capacity': int(capacity)
+            })
+            print(f"  - Added single track with capacity {capacity} from {start_km:.2f}km ({start_perc}%) to {end_km:.2f}km ({end_perc}%).")
+
+    elif args.random_single_track_percentage:
+        print("Defining single tracks randomly based on percentage...")
+        percentage = float(args.random_single_track_percentage[0])
+        capacity = int(args.random_single_track_percentage[1])
+        total_distance_m = course_data['distance'].iloc[-1]
+        
+        # Using 100m chunks to randomly distribute single tracks
+        chunk_size_m = 100
+        num_chunks = int(np.ceil(total_distance_m / chunk_size_m))
+        num_single_track_chunks = int(num_chunks * (percentage / 100))
+
+        print(f"  - Total course length: {total_distance_m / 1000:.2f} km")
+        print(f"  - Target single track percentage: {percentage}%")
+        print(f"  - Total single track length: {num_single_track_chunks * chunk_size_m / 1000:.2f} km")
+        print(f"  - Capacity for random single tracks: {capacity}")
+
+        # Randomly select chunks to be single track
+        single_track_indices = np.random.choice(num_chunks, num_single_track_chunks, replace=False)
+        single_track_indices.sort()
+
+        if len(single_track_indices) > 0:
+            # Merge consecutive chunks into single track sections
+            start_chunk = single_track_indices[0]
+            end_chunk = single_track_indices[0]
+            for i in range(1, len(single_track_indices)):
+                if single_track_indices[i] == end_chunk + 1:
+                    end_chunk = single_track_indices[i]
+                else:
+                    # End of a section, save it
+                    start_km = (start_chunk * chunk_size_m) / 1000
+                    end_km = ((end_chunk + 1) * chunk_size_m) / 1000
+                    single_track_definitions.append({'range_km': (start_km, end_km), 'capacity': capacity})
+                    print(f"  - Added random single track from {start_km:.2f}km to {end_km:.2f}km")
+                    # Start of a new section
+                    start_chunk = single_track_indices[i]
+                    end_chunk = single_track_indices[i]
+            
+            # Add the very last section
+            start_km = (start_chunk * chunk_size_m) / 1000
+            end_km = ((end_chunk + 1) * chunk_size_m) / 1000
+            single_track_definitions.append({'range_km': (start_km, end_km), 'capacity': capacity})
+            print(f"  - Added random single track from {start_km:.2f}km to {end_km:.2f}km")
+
+    elif args.single_track_config:
+        print(f"Loading single track definitions from '{args.single_track_config}'...")
+        try:
+            with open(args.single_track_config, 'r') as f:
+                single_track_definitions = json.load(f)
+        except FileNotFoundError:
+            print(f"Error: Single track config file '{args.single_track_config}' not found.")
+            exit()
+        except json.JSONDecodeError:
+            print(f"Error: Could not decode JSON from '{args.single_track_config}'.")
+            exit()
+
+    # --- Run simulation ---
     course_data_with_capacity = define_course_capacity(course_data, single_track_definitions)
     simulation_results = run_congestion_simulation(
         args.runners, args.avg_pace, args.std_dev, args.time_limit, course_data_with_capacity,
         args.wave_groups, args.wave_interval
     )
     
-    output_filename = f'congestion_sim_results_{args.runners}runners.csv'
+    # --- Save results ---
+    if args.output:
+        output_filename = args.output
+    else:
+        output_filename = f'congestion_sim_results_{args.runners}runners.csv'
+    
     simulation_results.to_csv(output_filename, index=False)
     print(f"\nSimulation complete. Results saved to '{output_filename}'.")
-
