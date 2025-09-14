@@ -62,13 +62,13 @@ First, convert your race's GPX file into a CSV format that the other scripts can
 **Command**
 
 ```shell
-python gpx_parser.py [path/to/your/gpx_file.gpx]
+python src/gpx_parser.py [path/to/your/gpx_file.gpx]
 ```
 
 **Example**
 
 ```shell
-python gpx_parser.py your_race.gpx
+python src/gpx_parser.py your_race.gpx
 
 # Output  
 A file named your_race_course_data.csv will be created.
@@ -78,38 +78,54 @@ A file named your_race_course_data.csv will be created.
 
 Next, use the course data CSV from Step 1 to run the main simulation.
 
-Preparation (Optional)  
-Before running, you can edit single_track_simulation.py to define the single-track sections specific to your race course.  
-
-```python
-# Customize these definitions to match your actual race course  
-single_track_definitions = [  
-    {'range_km': (5, 8), 'capacity': 2},    # From 5km to 8km, capacity is 2 runners  
-    {'range_km': (20, 22.5), 'capacity': 1}, # From 20km to 22.5km, capacity is 1 runner  
-]
-```
-
 **Command**
 
 ```shell
-python single_track_simulation.py [course_data.csv] [options]
+python src/single_track_simulation.py [course_data.csv] [options]
 ```
 
 **Options**
 
-* -n, --runners: Number of runners (Default: 500)  
-* -p, --avg_pace: Average pace in minutes per km (Default: 10.0)  
-* -s, --std_dev: Standard deviation of pace (Default: 1.5)  
-* -t, --time_limit: Race time limit in hours (Default: 24)
-* --wave_groups: Number of groups for wave start (default: 1, for a mass start)
-* --wave_interval: Start interval between waves in minutes (default: 0)
+*   `-n, --runners`: Number of runners (Default: 500)
+*   `-p, --avg_pace`: Average pace in minutes per km (Default: 10.0)
+*   `-s, --std_dev`: Standard deviation of pace (Default: 1.5)
+*   `-t, --time_limit`: Race time limit in hours (Default: 24)
+*   `--wave_groups`: Number of groups for wave start (default: 1, for a mass start)
+*   `--wave_interval`: Start interval between waves in minutes (default: 0)
 
-**Example (Simulating a race with 1500 runners and an average pace of 12 min/km)**
+**Single Track Definition Options**
+
+You can define single-track sections using one of the following command-line options. These options are mutually exclusive.
+
+*   `--single_track_config [JSON_FILE_PATH]`:
+    Specify a JSON file that defines the single-track sections. This is the recommended way for complex courses. The JSON file should look like this:
+    ```json
+    [
+        {"range_km": [5, 8], "capacity": 2},
+        {"range_km": [20, 22.5], "capacity": 1}
+    ]
+    ```
+
+*   `--simple_single_track [START_PERC] [END_PERC] [CAPACITY]`:
+    Define a single-track section based on the percentage of the total course distance. This option can be used multiple times.
+    *Example: To define a section with capacity 2 from 10% to 20% of the course:*
+    ```shell
+    --simple_single_track 10 20 2
+    ```
+
+*   `--random_single_track_percentage [PERCENTAGE] [CAPACITY]`:
+    Randomly designate a certain percentage of the course as single-track with a given capacity.
+    *Example: To make 5% of the course a single-track with capacity 1:*
+    ```shell
+    --random_single_track_percentage 5 1
+    ```
+
+**Example (Simulating a race with 1500 runners and defining single tracks via a JSON file)**
 
 ```shell
-python single_track_simulation.py your_race_course_data.csv --runners 1500 --avg_pace 12.0
+python src/single_track_simulation.py your_race_course_data.csv --runners 1500 --single_track_config single_track_definitions.json
 
-# Output  
+# Output
 A CSV file like congestion_sim_results_1500runners.csv will be generated.
 ```
 
@@ -124,7 +140,7 @@ This script shows where runners are distributed on the course at specific moment
 **Command**
 
 ```shell
-python runner_distribution_analysis.py [simulation_results.csv] [course_data.csv] [options]
+python src/runner_distribution_analysis.py [simulation_results.csv] [course_data.csv] [options]
 ```
 
 **Options**
@@ -134,7 +150,7 @@ python runner_distribution_analysis.py [simulation_results.csv] [course_data.csv
 **Example (Analyzing the distribution at 15 and 20 hours into the race)**
 
 ```shell
-python runner_distribution_analysis.py congestion_sim_results_1500runners.csv your_race_course_data.csv --times 15 20
+python src/runner_distribution_analysis.py congestion_sim_results_1500runners.csv your_race_course_data.csv --times 15 20
 
 # Output  
 An image file like runner_distribution_snapshot_1500runners_active.png will be created.
@@ -147,7 +163,7 @@ This script analyzes the peak congestion times at specific locations (checkpoint
 **Command**
 
 ```shell
-python aid_station_analysis.py [simulation_results.csv] [options]
+python src/aid_station_analysis.py [simulation_results.csv] [options]
 ```
 
 **Options**
@@ -158,10 +174,35 @@ python aid_station_analysis.py [simulation_results.csv] [options]
 **Example (Analyzing congestion at the 30km, 60km, and 90km marks)**
 
 ```shell
-python aid_station_analysis.py congestion_sim_results_1500runners.csv --stations 30 60 90
+python src/aid_station_analysis.py congestion_sim_results_1500runners.csv --stations 30 60 90
 
 # Output  
 A graph image like aid_station_congestion.png will be created.
+```
+
+#### **Dot Animation Map Generation**
+
+This script generates a standalone HTML file that visualizes the race as an animation with runners represented as moving dots on a map.
+
+**Command**
+
+```shell
+python src/create_dot_animation.py [simulation_results.csv] [course_data.csv] [options]
+```
+
+**Options**
+
+*   `-o, --output`: Output HTML file name (Default: `dot_animation.html`).
+*   `--time_step`: Time step in minutes for animation frames (Default: 10).
+*   `--max_runners`: Maximum number of runners to display on the map to prevent browser lag (Default: 300).
+
+**Example**
+
+```shell
+python src/create_dot_animation.py congestion_sim_results_1500runners.csv your_race_course_data.csv --time_step 5 --max_runners 500
+
+# Output
+A standalone HTML file named dot_animation.html (or as specified) will be created. You can open this file in a web browser to view the animation.
 ```
 
 ## **License**

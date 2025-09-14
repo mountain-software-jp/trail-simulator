@@ -60,13 +60,13 @@ pip install gpxpy pandas numpy matplotlib
 **コマンド**
 
 ```shell
-python gpx_parser.py [path/to/your/gpx_file.gpx]
+python src/gpx_parser.py [path/to/your/gpx_file.gpx]
 ```
 
 **実行例**
 
 ```shell
-python gpx_parser.py your_race.gpx
+python src/gpx_parser.py your_race.gpx
 
 # 出力
 your_race_course_data.csv という名前のファイルが作成されます。
@@ -76,36 +76,52 @@ your_race_course_data.csv という名前のファイルが作成されます。
 
 次に、ステップ1で作成したコースデータCSVを使用して、メインのシミュレーションを実行します。
 
-準備（任意）
-実行前に、`single_track_simulation.py`を編集して、実際のレースコースに合わせたシングルトラック区間を定義できます。
-
-```python
-# 実際のレースコースに合わせてこれらの定義をカスタマイズしてください
-single_track_definitions = [
-    {'range_km': (5, 8), 'capacity': 2},    # 5kmから8kmまで、キャパシティは2人
-    {'range_km': (20, 22.5), 'capacity': 1}, # 20kmから22.5kmまで、キャパシティは1人
-]
-```
-
 **コマンド**
 
 ```shell
-python single_track_simulation.py [course_data.csv] [options]
+python src/single_track_simulation.py [course_data.csv] [options]
 ```
 
 **オプション**
 
-*   -n, --runners: ランナーの数（デフォルト：500）
-*   -p, --avg_pace: 平均ペース（分/km）（デフォルト：10.0）
-*   -s, --std_dev: ペースの標準偏差（デフォルト：1.5）
-*   -t, --time_limit: 制限時間（時間）（デフォルト：24）
-*   --wave_groups: ウェーブスタートのグループ数（デフォルト：1、一斉スタートの場合）
-*   --wave_interval: ウェーブ間のスタート間隔（分）（デフォルト：0）
+*   `-n, --runners`: ランナーの数（デフォルト：500）
+*   `-p, --avg_pace`: 平均ペース（分/km）（デフォルト：10.0）
+*   `-s, --std_dev`: ペースの標準偏差（デフォルト：1.5）
+*   `-t, --time_limit`: 制限時間（時間）（デフォルト：24）
+*   `--wave_groups`: ウェーブスタートのグループ数（デフォルト：1、一斉スタートの場合）
+*   `--wave_interval`: ウェーブ間のスタート間隔（分）（デフォルト：0）
 
-**実行例（1500人のランナー、平均ペース12分/kmのレースをシミュレーションする場合）**
+**シングルトラック定義オプション**
+
+以下のコマンドラインオプションのいずれかを使用して、シングルトラック区間を定義できます。これらのオプションは同時に使用できません。
+
+*   `--single_track_config [JSON_FILE_PATH]`:
+    シングルトラック区間を定義したJSONファイルを指定します。複雑なコースにはこの方法を推奨します。JSONファイルは以下のような形式です。
+    ```json
+    [
+        {"range_km": [5, 8], "capacity": 2},
+        {"range_km": [20, 22.5], "capacity": 1}
+    ]
+    ```
+
+*   `--simple_single_track [START_PERC] [END_PERC] [CAPACITY]`:
+    コース全体の距離に対する割合でシングルトラック区間を定義します。このオプションは複数回使用できます。
+    *例：コースの10%から20%の区間をキャパシティ2で定義する場合：*
+    ```shell
+    --simple_single_track 10 20 2
+    ```
+
+*   `--random_single_track_percentage [PERCENTAGE] [CAPACITY]`:
+    指定された割合のコースを、特定のキャパシティを持つシングルトラックとしてランダムに設定します。
+    *例：コースの5%をキャパシティ1のシングルトラックにする場合：*
+    ```shell
+    --random_single_track_percentage 5 1
+    ```
+
+**実行例（1500人のランナーで、JSONファイルを使ってシングルトラックを定義してシミュレーションする場合）**
 
 ```shell
-python single_track_simulation.py your_race_course_data.csv --runners 1500 --avg_pace 12.0
+python src/single_track_simulation.py your_race_course_data.csv --runners 1500 --single_track_config single_track_definitions.json
 
 # 出力
 congestion_sim_results_1500runners.csv のようなCSVファイルが生成されます。
@@ -122,7 +138,7 @@ congestion_sim_results_1500runners.csv のようなCSVファイルが生成さ�
 **コマンド**
 
 ```shell
-python runner_distribution_analysis.py [simulation_results.csv] [course_data.csv] [options]
+python src/runner_distribution_analysis.py [simulation_results.csv] [course_data.csv] [options]
 ```
 
 **オプション**
@@ -132,7 +148,7 @@ python runner_distribution_analysis.py [simulation_results.csv] [course_data.csv
 **実行例（レース開始後15時間と20時間の分布を分析する場合）**
 
 ```shell
-python runner_distribution_analysis.py congestion_sim_results_1500runners.csv your_race_course_data.csv --times 15 20
+python src/runner_distribution_analysis.py congestion_sim_results_1500runners.csv your_race_course_data.csv --times 15 20
 
 # 出力
 runner_distribution_snapshot_1500runners_active.png のような画像ファイルが作成されます。
@@ -145,7 +161,7 @@ runner_distribution_snapshot_1500runners_active.png のような画像ファイ�
 **コマンド**
 
 ```shell
-python aid_station_analysis.py [simulation_results.csv] [options]
+python src/aid_station_analysis.py [simulation_results.csv] [options]
 ```
 
 **オプション**
@@ -156,10 +172,35 @@ python aid_station_analysis.py [simulation_results.csv] [options]
 **実行例（30km、60km、90km地点の渋滞を分析する場合）**
 
 ```shell
-python aid_station_analysis.py congestion_sim_results_1500runners.csv --stations 30 60 90
+python src/aid_station_analysis.py congestion_sim_results_1500runners.csv --stations 30 60 90
 
 # 出力
 aid_station_congestion.png のようなグラフ画像が作成されます。
+```
+
+#### **ドットアニメーションマップ生成**
+
+このスクリプトは、レースの様子を地図上で動くドットとして表現するアニメーションを含む、スタンドアロンのHTMLファイルを生成します。
+
+**コマンド**
+
+```shell
+python src/create_dot_animation.py [simulation_results.csv] [course_data.csv] [options]
+```
+
+**オプション**
+
+*   `-o, --output`: 出力HTMLファイル名（デフォルト: `dot_animation.html`）。
+*   `--time_step`: アニメーションフレームの時間間隔（分）（デフォルト: 10）。
+*   `--max_runners`: ブラウザの遅延を防ぐために地図上に表示するランナーの最大数（デフォルト: 300）。
+
+**実行例**
+
+```shell
+python src/create_dot_animation.py congestion_sim_results_1500runners.csv your_race_course_data.csv --time_step 5 --max_runners 500
+
+# 出力
+dot_animation.html という名前のスタンドアロンHTMLファイルが作成されます（または指定した名前）。このファイルをウェブブラウザで開くと、アニメーションを表示できます。
 ```
 
 ## **ライセンス**
