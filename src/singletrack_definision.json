@@ -1,0 +1,14 @@
+[
+  {
+    "range_km": [5, 8],
+    "capacity": 2
+  },
+  {
+    "range_km": [20, 22.5],
+    "capacity": 1
+  },
+  {
+    "range_km": [35.5, 38],
+    "capacity": 1
+  }
+]
