@@ -84,7 +84,7 @@ def parse_gpx(file_path):
 
     return df
 
-def main(gpx_filepath):
+def main(gpx_filepath, output_filepath=None):
     """
     Main process. Parses a GPX file and saves it as a CSV.
     """
@@ -92,9 +92,12 @@ def main(gpx_filepath):
     course_df = parse_gpx(gpx_filepath)
 
     if course_df is not None and not course_df.empty:
-        # Generate the output filename (e.g., my_race.gpx -> my_race_course_data.csv)
-        base_filename = os.path.splitext(os.path.basename(gpx_filepath))[0]
-        output_csv_path = f"{base_filename}_course_data.csv"
+        # Generate the output filename if not provided
+        if output_filepath:
+            output_csv_path = output_filepath
+        else:
+            base_filename = os.path.splitext(os.path.basename(gpx_filepath))[0]
+            output_csv_path = f"{base_filename}_course_data.csv"
         
         # Save the results as a CSV file
         course_df.to_csv(output_csv_path, index=False)
@@ -116,9 +119,14 @@ if __name__ == '__main__':
         type=str, 
         help='Path to the GPX file to be parsed.'
     )
+    parser.add_argument(
+        '-o', '--output',
+        type=str,
+        help='Path to the output CSV file. If not provided, a default name will be generated.'
+    )
     
     # Parse the arguments
     args = parser.parse_args()
     
     # Call the main process
-    main(args.gpx_filepath)
+    main(args.gpx_filepath, args.output)
