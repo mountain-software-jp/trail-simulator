@@ -18,6 +18,10 @@ A key feature is its ability to model congestion on narrow single-track sections
 
 ![](sample/aid_station_congestion.png)
 
+#### The gif of the dot animation on the map
+
+![](sample/dot_animation_sample.gif)
+
 ## **Disclaimer**
 
 This simulator is based on simplified physical models and statistical assumptions. Therefore, the simulation results should be considered as **approximations** and are not intended to be a perfect or exact representation of real-world race conditions.
@@ -62,16 +66,20 @@ First, convert your race's GPX file into a CSV format that the other scripts can
 **Command**
 
 ```shell
-python src/gpx_parser.py [path/to/your/gpx_file.gpx]
+python src/gpx_parser.py [path/to/your/gpx_file.gpx] [options]
 ```
+
+**Options**
+
+*   `-o, --output`: Path to the output CSV file. If not provided, a default name will be generated (e.g., `your_gpx_file_course_data.csv`).
 
 **Example**
 
 ```shell
-python src/gpx_parser.py your_race.gpx
+python src/gpx_parser.py your_race.gpx -o my_course.csv
 
 # Output  
-A file named your_race_course_data.csv will be created.
+A file named my_course.csv will be created.
 ```
 
 ### **Step 2: Run the Congestion Simulation**

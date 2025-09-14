@@ -16,6 +16,10 @@
 
 ![](sample/aid_station_congestion.png)
 
+#### ドットアニメーションのGIF
+
+![](sample/dot_animation_sample.gif)
+
 ## **免責事項**
 
 このシミュレーターは、簡略化された物理モデルと統計的な仮定に基づいています。そのため、シミュレーション結果は**近似値**として捉えるべきであり、実際のレースコンディションを完全または正確に表現するものではありません。
@@ -60,16 +64,20 @@ pip install gpxpy pandas numpy matplotlib
 **コマンド**
 
 ```shell
-python src/gpx_parser.py [path/to/your/gpx_file.gpx]
+python src/gpx_parser.py [path/to/your/gpx_file.gpx] [options]
 ```
+
+**オプション**
+
+*   `-o, --output`: 出力CSVファイルのパス。指定しない場合、デフォルトの名前（例：`your_gpx_file_course_data.csv`）が生成されます。
 
 **実行例**
 
 ```shell
-python src/gpx_parser.py your_race.gpx
+python src/gpx_parser.py your_race.gpx -o my_course.csv
 
 # 出力
-your_race_course_data.csv という名前のファイルが作成されます。
+my_course.csv という名前のファイルが作成されます。
 ```
 
 ### **ステップ2：渋滞シミュレーションを実行する**
