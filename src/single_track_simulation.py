@@ -67,13 +67,23 @@ def run_congestion_simulation(num_runners, avg_pace_min_per_km, std_dev_pace, ti
         runner_positions[t] = runner_positions[t-1]
         current_time_sec = t * time_step_sec
         
-        # --- Check for cutoffs ---
+        # --- Check for cutoffs, considering wave starts ---
         for cutoff_dist_km, cutoff_time_h in cutoffs:
-            if current_time_sec >= cutoff_time_h * 3600:
+            cutoff_time_sec = cutoff_time_h * 3600
+            
+            # Optimization: only check if the current time is past the first possible cutoff time
+            if current_time_sec >= cutoff_time_sec:
                 cutoff_dist_m = cutoff_dist_km * 1000
-                # Find runners who are active but have not reached the cutoff point in time
+                
+                # Calculate each runner's personal cutoff time in seconds
+                # This is the base cutoff time plus their individual start delay
+                personal_cutoff_times_sec = cutoff_time_sec + runner_start_times_sec
+                
+                # Find runners who are active, have passed their personal cutoff time, 
+                # but have not reached the cutoff distance.
                 dnf_indices = np.where(
                     (runner_status == 'active') &
+                    (current_time_sec >= personal_cutoff_times_sec) &
                     (runner_positions[t] < cutoff_dist_m)
                 )[0]
                 
