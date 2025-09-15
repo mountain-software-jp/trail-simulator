@@ -167,4 +167,4 @@ Each analysis result will be saved with the filename specified in the `analysis`
 
 ## **License**
 
-This project is released under the [MIT License](https://www.google.com/search?q=LICENSE).
+This project is released under the [MIT License](./LICENSE).

@@ -165,4 +165,4 @@ project_params.jsonの`analysis`セクションで指定されたファイル名
 
 ## **ライセンス**
 
-このプロジェクトは[MITライセンス](https://www.google.com/search?q=LICENSE)の下で公開されています。
+このプロジェクトは[MITライセンス](./LICENSE)の下で公開されています。
