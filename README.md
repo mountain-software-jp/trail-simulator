@@ -82,135 +82,87 @@ python src/gpx_parser.py your_race.gpx -o my_course.csv
 A file named my_course.csv will be created.
 ```
 
-### **Step 2: Run the Congestion Simulation**
+### **Step 2 & 3: Run Simulation and Analysis**
 
-Next, use the course data CSV from Step 1 to run the main simulation.
+All simulation and analysis parameters are managed through a single project JSON file.
 
-**Command**
+**Project JSON File Structure**
 
-```shell
-python src/single_track_simulation.py [course_data.csv] [options]
-```
+The file consists of two main sections: `simulation` and `analysis`.
 
-**Options**
-
-*   `-n, --runners`: Number of runners (Default: 500)
-*   `-p, --avg_pace`: Average pace in minutes per km (Default: 10.0)
-*   `-s, --std_dev`: Standard deviation of pace (Default: 1.5)
-*   `-t, --time_limit`: Race time limit in hours (Default: 24)
-*   `--wave_groups`: Number of groups for wave start (default: 1, for a mass start)
-*   `--wave_interval`: Start interval between waves in minutes (default: 0)
-
-**Single Track Definition Options**
-
-You can define single-track sections using one of the following command-line options. These options are mutually exclusive.
-
-*   `--single_track_config [JSON_FILE_PATH]`:
-    Specify a JSON file that defines the single-track sections. This is the recommended way for complex courses. The JSON file should look like this:
-    ```json
-    [
-        {"range_km": [5, 8], "capacity": 2},
-        {"range_km": [20, 22.5], "capacity": 1}
+```json
+{
+  "simulation": {
+    "settings": {
+      "runners": 500,
+      "avg_pace_min_per_km": 12,
+      "std_dev_pace": 1.5,
+      "time_limit_hours": 26
+    },
+    "wave_start": {
+      "groups": 3,
+      "interval_minutes": 10
+    },
+    "cutoffs": [
+      {"distance_km": 39, "time_hours": 10},
+      {"distance_km": 66, "time_hours": 15}
+    ],
+    "single_track_sections": [
+      {"range_km": [5, 8], "capacity": 2}
     ]
-    ```
+  },
+  "analysis": {
+    "runner_distribution": {
+      "snapshot_times_hours": [5, 10, 15, 20],
+      "output_filename": "runner_distribution_snapshot.png"
+    },
+    "aid_station": {
+      "stations_km": [39, 66],
+      "output_filename": "aid_station_congestion.png"
+    },
+    "dot_animation": {
+      "output_filename": "dot_animation.html",
+      "time_step_minutes": 15,
+      "max_runners_to_display": 500
+    }
+  }
+}
+```
 
-*   `--simple_single_track [START_PERC] [END_PERC] [CAPACITY]`:
-    Define a single-track section based on the percentage of the total course distance. This option can be used multiple times.
-    *Example: To define a section with capacity 2 from 10% to 20% of the course:*
+**Execution Workflow**
+
+1.  **Run the Simulation**
     ```shell
-    --simple_single_track 10 20 2
+    python src/single_track_simulation.py [course.csv] [project.json] -o [simulation_results.csv]
     ```
-
-*   `--random_single_track_percentage [PERCENTAGE] [CAPACITY]`:
-    Randomly designate a certain percentage of the course as single-track with a given capacity.
-    *Example: To make 5% of the course a single-track with capacity 1:*
+2.  **Run the Analyses**
     ```shell
-    --random_single_track_percentage 5 1
+    # Runner Distribution
+    python src/runner_distribution_analysis.py [simulation_results.csv] [course.csv] [project.json]
+    
+    # Aid Station Congestion
+    python src/aid_station_analysis.py [simulation_results.csv] [project.json]
+    
+    # Dot Animation
+    python src/create_dot_animation.py [simulation_results.csv] [course.csv] [project.json]
     ```
-
-**Example (Simulating a race with 1500 runners and defining single tracks via a JSON file)**
-
-```shell
-python src/single_track_simulation.py your_race_course_data.csv --runners 1500 --single_track_config single_track_definitions.json
-
-# Output
-A CSV file like congestion_sim_results_1500runners.csv will be generated.
-```
-
-### **Step 3: Analyze the Simulation Results**
-
-Use the two analysis scripts to visualize the data generated in Step 2.
-
-#### **Runner Distribution Snapshot Analysis**
-
-This script shows where runners are distributed on the course at specific moments in time.
-
-**Command**
-
-```shell
-python src/runner_distribution_analysis.py [simulation_results.csv] [course_data.csv] [options]
-```
-
-**Options**
-
-* -t, --times: Specify snapshot times in hours, separated by spaces. (Default: 3 10)
-
-**Example (Analyzing the distribution at 15 and 20 hours into the race)**
-
-```shell
-python src/runner_distribution_analysis.py congestion_sim_results_1500runners.csv your_race_course_data.csv --times 15 20
-
-# Output  
-An image file like runner_distribution_snapshot_1500runners_active.png will be created.
-```
-
-#### **Aid Station Congestion Analysis**
-
-This script analyzes the peak congestion times at specific locations (checkpoints or aid stations).
-
-**Command**
-
-```shell
-python src/aid_station_analysis.py [simulation_results.csv] [options]
-```
-
-**Options**
-
-* -s, --stations: Specify checkpoint distances in km, separated by spaces. (Default: 25 50 75 95)  
-* -o, --output: Specify the output filename. (Default: aid_station_congestion.png)
-
-**Example (Analyzing congestion at the 30km, 60km, and 90km marks)**
-
-```shell
-python src/aid_station_analysis.py congestion_sim_results_1500runners.csv --stations 30 60 90
-
-# Output  
-A graph image like aid_station_congestion.png will be created.
-```
-
-#### **Dot Animation Map Generation**
-
-This script generates a standalone HTML file that visualizes the race as an animation with runners represented as moving dots on a map.
-
-**Command**
-
-```shell
-python src/create_dot_animation.py [simulation_results.csv] [course_data.csv] [options]
-```
-
-**Options**
-
-*   `-o, --output`: Output HTML file name (Default: `dot_animation.html`).
-*   `--time_step`: Time step in minutes for animation frames (Default: 10).
-*   `--max_runners`: Maximum number of runners to display on the map to prevent browser lag (Default: 300).
 
 **Example**
 
 ```shell
-python src/create_dot_animation.py congestion_sim_results_1500runners.csv your_race_course_data.csv --time_step 5 --max_runners 500
+# 1. Create course data
+python src/gpx_parser.py your_race.gpx -o my_course.csv
+
+# 2. Run the simulation
+python src/single_track_simulation.py my_course.csv project_params.json -o my_simulation.csv
+
+# 3. Run all analyses
+python src/runner_distribution_analysis.py my_simulation.csv my_course.csv project_params.json
+python src/aid_station_analysis.py my_simulation.csv project_params.json
+python src/create_dot_animation.py my_simulation.csv my_course.csv project_params.json
 
 # Output
-A standalone HTML file named dot_animation.html (or as specified) will be created. You can open this file in a web browser to view the animation.
+Each analysis result will be saved with the filename specified in the `analysis` section of project_params.json.
 ```
 
 ## **License**
