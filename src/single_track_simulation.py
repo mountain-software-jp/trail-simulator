@@ -16,9 +16,13 @@ def define_course_capacity(course_df, single_track_sections):
         print(f"Set single track with capacity {capacity} from {start_km}km to {end_km}km.")
     return course_df
 
-def run_congestion_simulation(num_runners, avg_pace_min_per_km, std_dev_pace, time_limit_hours, course_df, wave_groups, wave_interval):
-    """Runs a simulation that considers congestion on single tracks (Congestion Model Ver.)."""
+def run_congestion_simulation(num_runners, avg_pace_min_per_km, std_dev_pace, time_limit_hours, course_df, wave_groups, wave_interval, cutoffs):
+    """Runs a simulation that considers congestion on single tracks and handles runner DNFs due to cutoffs."""
     print("Starting simulation with congestion model...")
+    if cutoffs:
+        print("Cutoff points enabled:")
+        for dist, time in cutoffs:
+            print(f"  - {dist} km at {time} hours")
     
     # --- Prepare runners ---
     runners_pace_sec_per_meter = np.random.normal(
@@ -55,19 +59,39 @@ def run_congestion_simulation(num_runners, avg_pace_min_per_km, std_dev_pace, ti
 
     # --- For recording simulation data ---
     runner_positions = np.zeros((total_steps, num_runners))
+    # Add a status tracker for DNF (Did Not Finish)
+    runner_status = np.full(num_runners, 'active') # 'active' or 'dnf'
     
     # --- Simulation loop ---
     for t in range(1, total_steps):
         runner_positions[t] = runner_positions[t-1]
+        current_time_sec = t * time_step_sec
+        
+        # --- Check for cutoffs ---
+        for cutoff_dist_km, cutoff_time_h in cutoffs:
+            if current_time_sec >= cutoff_time_h * 3600:
+                cutoff_dist_m = cutoff_dist_km * 1000
+                # Find runners who are active but have not reached the cutoff point in time
+                dnf_indices = np.where(
+                    (runner_status == 'active') &
+                    (runner_positions[t] < cutoff_dist_m)
+                )[0]
+                
+                if len(dnf_indices) > 0:
+                    runner_status[dnf_indices] = 'dnf'
         
         cell_occupancy.fill(0)
-        current_cells = (runner_positions[t] / cell_size_m).astype(int)
+        active_runner_indices = np.where(runner_status == 'active')[0]
+        current_cells = (runner_positions[t, active_runner_indices] / cell_size_m).astype(int)
         np.add.at(cell_occupancy, current_cells[current_cells < num_cells], 1)
 
         sorted_runner_indices = np.argsort(runner_positions[t])[::-1]
 
         for r in sorted_runner_indices:
-            current_time_sec = t * time_step_sec
+            # Skip runners who are DNF
+            if runner_status[r] == 'dnf':
+                continue
+            
             # Skip runners who have not yet reached their start time
             if current_time_sec < runner_start_times_sec[r]:
                 continue
@@ -101,116 +125,71 @@ def run_congestion_simulation(num_runners, avg_pace_min_per_km, std_dev_pace, ti
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Run a trail running simulation with a congestion model.')
-    parser.add_argument('course_data_csv', type=str, help='Path to the course data CSV file (generated from GPX)')
-    parser.add_argument('-o', '--output', type=str, help='Path to the output CSV file')
-    parser.add_argument('-n', '--runners', type=int, default=500, help='Number of runners (default: 500)')
-    parser.add_argument('-p', '--avg_pace', type=float, default=10.0, help='Overall average pace in minutes/km (default: 10.0)')
-    parser.add_argument('-s', '--std_dev', type=float, default=1.5, help='Standard deviation of pace (default: 1.5)')
-    parser.add_argument('-t', '--time_limit', type=int, default=24, help='Race time limit in hours (default: 24)')
-    
-    # --- Arguments for wave start ---
-    parser.add_argument('--wave_groups', type=int, default=1, help='Number of groups for wave start (default: 1, for a mass start)')
-    parser.add_argument('--wave_interval', type=int, default=0, help='Start interval between waves in minutes (default: 0)')
-
-    # --- Arguments for single track definition ---
-    st_group = parser.add_mutually_exclusive_group()
-    st_group.add_argument('--single_track_config', type=str, help='Path to a JSON file defining single track sections.')
-    st_group.add_argument('--simple_single_track', nargs=3, action='append', metavar=('START_PERC', 'END_PERC', 'CAPACITY'),
-                          help='Define a single track section by course percentage. Can be used multiple times. E.g., --simple_single_track 10 20 2')
-    st_group.add_argument('--random_single_track_percentage', nargs=2, metavar=('PERCENTAGE', 'CAPACITY'),
-                          help='Define single track sections randomly based on a total percentage of the course. E.g., 5 1 for 5%% with capacity 1.')
-
+    parser = argparse.ArgumentParser(
+        description='Run a trail running simulation using a JSON parameter file.'
+    )
+    parser.add_argument(
+        'course_data_csv', 
+        type=str, 
+        help='Path to the course data CSV file (generated from GPX).'
+    )
+    parser.add_argument(
+        'params_json',
+        type=str,
+        help='Path to the JSON file containing simulation parameters.'
+    )
+    parser.add_argument(
+        '-o', '--output', 
+        type=str, 
+        help='Path to the output CSV file. Overrides the one in the JSON file if provided.'
+    )
     args = parser.parse_args()
+
+    # --- Load parameters from JSON ---
+    try:
+        with open(args.params_json, 'r') as f:
+            params = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: Parameter file '{args.params_json}' not found.")
+        exit()
+    except json.JSONDecodeError:
+        print(f"Error: Could not decode JSON from '{args.params_json}'.")
+        exit()
+
+    # --- Extract parameters with defaults ---
+    sim_params = params.get('simulation', {})
+    
+    settings = sim_params.get('settings', {})
+    num_runners = settings.get('runners', 500)
+    avg_pace = settings.get('avg_pace_min_per_km', 10.0)
+    std_dev = settings.get('std_dev_pace', 1.5)
+    time_limit = settings.get('time_limit_hours', 24)
+
+    wave_settings = sim_params.get('wave_start', {})
+    wave_groups = wave_settings.get('groups', 1)
+    wave_interval = wave_settings.get('interval_minutes', 0)
+
+    cutoffs_list = sim_params.get('cutoffs', [])
+    cutoffs = [(c['distance_km'], c['time_hours']) for c in cutoffs_list]
+
+    single_track_definitions = sim_params.get('single_track_sections', [])
 
     # --- Load course data ---
     try:
         course_data = pd.read_csv(args.course_data_csv)
     except FileNotFoundError:
-        print(f"Error: File '{args.course_data_csv}' not found.")
+        print(f"Error: Course data file '{args.course_data_csv}' not found.")
         exit()
-
-    # --- Determine single track definitions ---
-    single_track_definitions = []
-    if args.simple_single_track:
-        print("Defining single tracks based on course percentage...")
-        total_distance_km = course_data['distance'].iloc[-1] / 1000
-        for start_perc, end_perc, capacity in args.simple_single_track:
-            start_km = total_distance_km * (float(start_perc) / 100)
-            end_km = total_distance_km * (float(end_perc) / 100)
-            single_track_definitions.append({
-                'range_km': (start_km, end_km),
-                'capacity': int(capacity)
-            })
-            print(f"  - Added single track with capacity {capacity} from {start_km:.2f}km ({start_perc}%) to {end_km:.2f}km ({end_perc}%).")
-
-    elif args.random_single_track_percentage:
-        print("Defining single tracks randomly based on percentage...")
-        percentage = float(args.random_single_track_percentage[0])
-        capacity = int(args.random_single_track_percentage[1])
-        total_distance_m = course_data['distance'].iloc[-1]
-        
-        # Using 100m chunks to randomly distribute single tracks
-        chunk_size_m = 100
-        num_chunks = int(np.ceil(total_distance_m / chunk_size_m))
-        num_single_track_chunks = int(num_chunks * (percentage / 100))
-
-        print(f"  - Total course length: {total_distance_m / 1000:.2f} km")
-        print(f"  - Target single track percentage: {percentage}%")
-        print(f"  - Total single track length: {num_single_track_chunks * chunk_size_m / 1000:.2f} km")
-        print(f"  - Capacity for random single tracks: {capacity}")
-
-        # Randomly select chunks to be single track
-        single_track_indices = np.random.choice(num_chunks, num_single_track_chunks, replace=False)
-        single_track_indices.sort()
-
-        if len(single_track_indices) > 0:
-            # Merge consecutive chunks into single track sections
-            start_chunk = single_track_indices[0]
-            end_chunk = single_track_indices[0]
-            for i in range(1, len(single_track_indices)):
-                if single_track_indices[i] == end_chunk + 1:
-                    end_chunk = single_track_indices[i]
-                else:
-                    # End of a section, save it
-                    start_km = (start_chunk * chunk_size_m) / 1000
-                    end_km = ((end_chunk + 1) * chunk_size_m) / 1000
-                    single_track_definitions.append({'range_km': (start_km, end_km), 'capacity': capacity})
-                    print(f"  - Added random single track from {start_km:.2f}km to {end_km:.2f}km")
-                    # Start of a new section
-                    start_chunk = single_track_indices[i]
-                    end_chunk = single_track_indices[i]
-            
-            # Add the very last section
-            start_km = (start_chunk * chunk_size_m) / 1000
-            end_km = ((end_chunk + 1) * chunk_size_m) / 1000
-            single_track_definitions.append({'range_km': (start_km, end_km), 'capacity': capacity})
-            print(f"  - Added random single track from {start_km:.2f}km to {end_km:.2f}km")
-
-    elif args.single_track_config:
-        print(f"Loading single track definitions from '{args.single_track_config}'...")
-        try:
-            with open(args.single_track_config, 'r') as f:
-                single_track_definitions = json.load(f)
-        except FileNotFoundError:
-            print(f"Error: Single track config file '{args.single_track_config}' not found.")
-            exit()
-        except json.JSONDecodeError:
-            print(f"Error: Could not decode JSON from '{args.single_track_config}'.")
-            exit()
 
     # --- Run simulation ---
     course_data_with_capacity = define_course_capacity(course_data, single_track_definitions)
     simulation_results = run_congestion_simulation(
-        args.runners, args.avg_pace, args.std_dev, args.time_limit, course_data_with_capacity,
-        args.wave_groups, args.wave_interval
+        num_runners, avg_pace, std_dev, time_limit, course_data_with_capacity,
+        wave_groups, wave_interval, cutoffs
     )
     
     # --- Save results ---
-    if args.output:
-        output_filename = args.output
-    else:
-        output_filename = f'congestion_sim_results_{args.runners}runners.csv'
+    output_filename = args.output if args.output else f'congestion_sim_results_{num_runners}runners.csv'
     
     simulation_results.to_csv(output_filename, index=False)
     print(f"\nSimulation complete. Results saved to '{output_filename}'.")

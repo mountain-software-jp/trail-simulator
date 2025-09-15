@@ -1,0 +1,39 @@
+{
+  "simulation": {
+    "settings": {
+      "runners": 500,
+      "avg_pace_min_per_km": 12,
+      "std_dev_pace": 1.5,
+      "time_limit_hours": 26
+    },
+    "wave_start": {
+      "groups": 3,
+      "interval_minutes": 10
+    },
+    "cutoffs": [
+      {"distance_km": 39, "time_hours": 10},
+      {"distance_km": 66, "time_hours": 15},
+      {"distance_km": 87, "time_hours": 23.5}
+    ],
+    "single_track_sections": [
+      {"range_km": [5, 8], "capacity": 2},
+      {"range_km": [20, 22.5], "capacity": 1},
+      {"range_km": [35.5, 38], "capacity": 1}
+    ]
+  },
+  "analysis": {
+    "runner_distribution": {
+      "snapshot_times_hours": [5, 10, 15, 20],
+      "output_filename": "runner_distribution_snapshot.png"
+    },
+    "aid_station": {
+      "stations_km": [39, 66, 87],
+      "output_filename": "aid_station_congestion.png"
+    },
+    "dot_animation": {
+      "output_filename": "dot_animation.html",
+      "time_step_minutes": 15,
+      "max_runners_to_display": 500
+    }
+  }
+}

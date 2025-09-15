@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+import json
 
 def analyze_aid_station_congestion(csv_filepath, aid_stations_km, output_filename):
     """
@@ -87,7 +88,7 @@ def analyze_aid_station_congestion(csv_filepath, aid_stations_km, output_filenam
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Analyze aid station congestion from a race simulation CSV file.'
+        description='Analyze aid station congestion from a race simulation using a project JSON file.'
     )
     parser.add_argument(
         'csv_filepath', 
@@ -95,19 +96,26 @@ if __name__ == '__main__':
         help='Path to the simulation result CSV file.'
     )
     parser.add_argument(
-        '-s', '--stations',
-        nargs='+',
-        type=float,
-        default=[25, 50, 75, 95],
-        help='List of aid station locations in km, separated by spaces. (default: 25 50 75 95)'
+        'project_params_json',
+        type=str,
+        help='Path to the project JSON file containing all parameters.'
     )
-    parser.add_argument(
-        '-o', '--output', 
-        type=str, 
-        default='aid_station_congestion.png', 
-        help='Output image file name. (default: aid_station_congestion.png)'
-    )
-    
     args = parser.parse_args()
-    analyze_aid_station_congestion(args.csv_filepath, args.stations, args.output)
 
+    # --- Load parameters from JSON ---
+    try:
+        with open(args.project_params_json, 'r') as f:
+            params = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: Parameter file '{args.project_params_json}' not found.")
+        exit()
+    except json.JSONDecodeError:
+        print(f"Error: Could not decode JSON from '{args.project_params_json}'.")
+        exit()
+
+    # --- Extract parameters for this specific analysis ---
+    analysis_params = params.get('analysis', {}).get('aid_station', {})
+    stations_km = analysis_params.get('stations_km', [25, 50, 75, 95])
+    output_filename = analysis_params.get('output_filename', 'aid_station_congestion.png')
+    
+    analyze_aid_station_congestion(args.csv_filepath, stations_km, output_filename)
