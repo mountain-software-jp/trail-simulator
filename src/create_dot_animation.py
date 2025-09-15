@@ -210,22 +210,31 @@ def create_standalone_animation(simulation_csv, course_csv, output_html, time_st
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Generate a standalone dot animation map from race simulation data.')
+    parser = argparse.ArgumentParser(description='Generate a standalone dot animation map from race simulation data using a project JSON file.')
     parser.add_argument('simulation_csv', type=str, help='Path to the simulation results CSV file.')
     parser.add_argument('course_csv', type=str, help='Path to the course data CSV file (with lat/lon).')
-    parser.add_argument('-o', '--output', type=str, default='dot_animation.html', help='Output HTML file name.')
     parser.add_argument(
-        '--time_step', 
-        type=int, 
-        default=10, 
-        help='Time step in MINUTES for animation frames.'
-    )
-    parser.add_argument(
-        '--max_runners', 
-        type=int, 
-        default=300,
-        help='Maximum number of runners to display on the map to prevent browser lag.'
+        'project_params_json',
+        type=str,
+        help='Path to the project JSON file containing all parameters.'
     )
     args = parser.parse_args()
-    create_standalone_animation(args.simulation_csv, args.course_csv, args.output, args.time_step, args.max_runners)
 
+    # --- Load parameters from JSON ---
+    try:
+        with open(args.project_params_json, 'r') as f:
+            params = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: Parameter file '{args.project_params_json}' not found.")
+        exit()
+    except json.JSONDecodeError:
+        print(f"Error: Could not decode JSON from '{args.project_params_json}'.")
+        exit()
+
+    # --- Extract parameters for this specific analysis ---
+    analysis_params = params.get('analysis', {}).get('dot_animation', {})
+    output_filename = analysis_params.get('output_filename', 'dot_animation.html')
+    time_step_min = analysis_params.get('time_step_minutes', 10)
+    max_runners = analysis_params.get('max_runners_to_display', 300)
+
+    create_standalone_animation(args.simulation_csv, args.course_csv, output_filename, time_step_min, max_runners)
