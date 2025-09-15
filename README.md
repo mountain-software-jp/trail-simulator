@@ -20,7 +20,7 @@ A key feature is its ability to model congestion on narrow single-track sections
 
 #### The gif of the dot animation on the map
 
-![](sample/dot_animation_sample.gif)
+![](sample/dot_animation_sample.webp)
 
 ## **Disclaimer**
 

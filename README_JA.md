@@ -18,7 +18,7 @@
 
 #### ドットアニメーションのGIF
 
-![](sample/dot_animation_sample.gif)
+![](sample/dot_animation_sample.webp)
 
 ## **免責事項**
 
