@@ -52,10 +52,13 @@ def run_congestion_simulation(num_runners, avg_pace_min_per_km, std_dev_pace, ti
     cell_occupancy = np.zeros(num_cells, dtype=int)
     
     cell_capacity = np.zeros(num_cells, dtype=int)
+    cell_gradient = np.zeros(num_cells, dtype=float)
     for i in range(num_cells):
         cell_start_m = i * cell_size_m
         point_in_cell = course_df.iloc[(course_df['distance'] - (cell_start_m + cell_size_m/2)).abs().argsort()[:1]]
         cell_capacity[i] = point_in_cell['capacity'].values[0]
+        if 'gradient' in point_in_cell.columns:
+            cell_gradient[i] = point_in_cell['gradient'].values[0]
 
     # --- For recording simulation data ---
     runner_positions = np.zeros((total_steps, num_runners))
@@ -109,10 +112,29 @@ def run_congestion_simulation(num_runners, avg_pace_min_per_km, std_dev_pace, ti
             current_pos = runner_positions[t, r]
             if current_pos >= max_distance_m: continue
 
-            ideal_distance_moved = time_step_sec / runners_pace_sec_per_meter[r]
-            ideal_next_pos = current_pos + ideal_distance_moved
-
+            # --- Pace Adjustment based on Gradient ---
             current_cell_idx = int(current_pos / cell_size_m)
+            adjusted_pace_sec_per_meter = runners_pace_sec_per_meter[r]
+            if current_cell_idx < num_cells:
+                gradient = cell_gradient[current_cell_idx]
+                # A simple model for pace adjustment:
+                # - Uphill (positive gradient) slows the runner down (increases time per meter).
+                # - Downhill (negative gradient) speeds them up (decreases time per meter).
+                # The factors (0.02 for uphill, 0.01 for downhill) can be fine-tuned.
+                if gradient > 0:
+                    adjustment_factor = 1 + gradient * 0.02
+                else:
+                    adjustment_factor = 1 + gradient * 0.01  # gradient is negative, so this reduces the factor
+                
+                # Ensure the pace does not become zero or negative (infinitely fast)
+                # We set a minimum adjustment factor to prevent this.
+                adjustment_factor = max(0.2, adjustment_factor) # Limit max speed increase on downhills
+                adjusted_pace_sec_per_meter *= adjustment_factor
+
+            # Calculate the distance the runner would ideally move in this time step
+            ideal_distance_moved = time_step_sec / adjusted_pace_sec_per_meter
+            ideal_next_pos = current_pos + ideal_distance_moved
+            
             ideal_next_cell_idx = int(ideal_next_pos / cell_size_m)
             
             allowed_pos = ideal_next_pos
