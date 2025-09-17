@@ -77,13 +77,20 @@ def analyze_snapshot(simulation_csv, course_data_csv, snapshot_times_hours, cuto
         finished_mask = runner_positions >= finish_line_m
         num_finishers = np.sum(finished_mask)
 
-        # DNF runners are those who stopped moving before this snapshot
-        # We identify them by checking if their position is the same as in the final step of the simulation,
-        # but they haven't finished.
+        # DNF runners are those who stopped moving before this snapshot.
+        # This is identified by checking if their position is the same as in the final step of the simulation,
+        # but they haven't finished. This logic is only applied if the snapshot time is after the first cutoff time.
         final_runner_cols = [col for col in df_sim.columns if col.startswith('runner_')]
         final_positions = df_sim.iloc[-1][final_runner_cols].values
-        dnf_mask = (runner_positions == final_positions) & ~finished_mask
-        num_dnf = np.sum(dnf_mask)
+        
+        num_dnf = 0
+        dnf_mask = np.zeros(num_runners, dtype=bool)  # Initialize with no DNFs
+
+        # Only calculate DNF if the snapshot time is past the first cutoff time
+        first_cutoff_time_h = cutoffs[0][1] if cutoffs else float('inf')
+        if time_h >= first_cutoff_time_h:
+            dnf_mask = (runner_positions == final_positions) & ~finished_mask
+            num_dnf = np.sum(dnf_mask)
 
         # Active runners are everyone else
         active_mask = ~finished_mask & ~dnf_mask
