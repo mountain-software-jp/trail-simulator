@@ -7,6 +7,8 @@ import { useParams } from './hooks/useParams';
 
 function App() {
   const [activeTab, setActiveTab] = useState('setup');
+  const [isAnalysisRunning, setIsAnalysisRunning] = useState(false);
+  const [analysisProgressText, setAnalysisProgressText] = useState('Preparing...');
   const {
     courseCsvPath,
     setCourseCsvPath,
@@ -17,6 +19,8 @@ function App() {
     cutoffs,
     singleTracks,
     snapshotTimes,
+    formData,
+    setFormData,
     importParams,
     exportParams,
     saveParams,
@@ -105,16 +109,26 @@ function App() {
       return;
     }
 
+    setIsAnalysisRunning(true);
+    setAnalysisProgressText('Running runner distribution analysis...');
+
     try {
       const distOutput = await window.electronAPI.runPythonScript('runner_distribution_analysis.py', [simulationCsvPath, courseCsvPath, 'project_params.json']);
+      setAnalysisProgressText('Running aid station analysis...');
       const aidOutput = await window.electronAPI.runPythonScript('aid_station_analysis.py', [simulationCsvPath, 'project_params.json']);
+      setAnalysisProgressText('Creating dot animation...');
       const animOutput = await window.electronAPI.runPythonScript('create_dot_animation.py', [simulationCsvPath, courseCsvPath, 'project_params.json']);
 
       document.getElementById('analysisOutput').textContent = distOutput + '\n' + aidOutput + '\n' + animOutput;
+      setAnalysisProgressText('Displaying results...');
 
       await displayResults();
+      setAnalysisProgressText('Completed');
     } catch (error) {
       document.getElementById('analysisOutput').textContent = 'Error: ' + error.message;
+      setAnalysisProgressText('Error');
+    } finally {
+      setIsAnalysisRunning(false);
     }
   };
 
@@ -125,19 +139,31 @@ function App() {
     imageContainer.innerHTML = '';
     animationContainer.innerHTML = '';
 
-    const imageFiles = ['runner_distribution_snapshot_500.png', 'aid_station_congestion.png'];
+    // アプリケーションパスを取得
+    const appPath = await window.electronAPI.getAppPath();
+
+    // 動的にファイル名を決定
+    const imageFiles = [
+      `runner_distribution_snapshot_${formData.runners}.png`,
+      'aid_station_congestion.png'
+    ];
+
     for (const file of imageFiles) {
       const exists = await window.electronAPI.fileExists(file);
       if (exists) {
         const displayName = file.replace(/_/g, ' ').replace('.png', '').replace(/\b\w/g, l => l.toUpperCase());
-        imageContainer.innerHTML += `<div class="result-item"><h4>${displayName}</h4><img src="${file}" alt="${file}"></div>`;
+        // Electron でローカルファイルを表示するために file:// プロトコルを使用
+        const fileUrl = `file://${appPath}/${file}`;
+        imageContainer.innerHTML += `<div class="result-item"><h4>${displayName}</h4><img src="${fileUrl}" alt="${file}" style="max-width: 100%; height: auto;"></div>`;
       }
     }
 
     const animationFile = 'dot_animation.html';
     const animExists = await window.electronAPI.fileExists(animationFile);
     if (animExists) {
-      animationContainer.innerHTML = `<div class="result-item"><h4>Dot Animation</h4><iframe src="${animationFile}"></iframe></div>`;
+      // アニメーションファイルも file:// プロトコルを使用
+      const animUrl = `file://${appPath}/${animationFile}`;
+      animationContainer.innerHTML = `<div class="result-item"><h4>Dot Animation</h4><iframe src="${animUrl}" style="width: 100%; height: 600px; border: none;"></iframe></div>`;
     }
   };
 
@@ -160,6 +186,8 @@ function App() {
           cutoffs={cutoffs}
           singleTracks={singleTracks}
           snapshotTimes={snapshotTimes}
+          formData={formData}
+          setFormData={setFormData}
           importParams={importParams}
           exportParams={exportParams}
           saveParams={saveParams}
@@ -180,7 +208,11 @@ function App() {
       )}
 
       {activeTab === 'results' && (
-        <ResultsTab runAnalysis={runAnalysis} />
+        <ResultsTab
+          runAnalysis={runAnalysis}
+          isRunning={isAnalysisRunning}
+          progressText={analysisProgressText}
+        />
       )}
     </div>
   );

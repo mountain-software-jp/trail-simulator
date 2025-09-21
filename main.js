@@ -109,3 +109,8 @@ ipcMain.handle('file-exists', async (event, filePath) => {
     return false;
   }
 });
+
+// アプリケーションパス取得
+ipcMain.handle('get-app-path', async (event) => {
+  return app.getAppPath();
+});

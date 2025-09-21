@@ -1,6 +1,6 @@
 import React from 'react';
 
-function SetupTab({ selectGPXFile, courseCsvPath, simulationCsvPath, paramsJson, cutoffs, singleTracks, snapshotTimes, importParams, exportParams, saveParams, addCutoff, removeCutoff, updateCutoff, addTrack, removeTrack, updateTrack, addSnapshotTime, removeSnapshotTime, updateSnapshotTime }) {
+function SetupTab({ selectGPXFile, courseCsvPath, simulationCsvPath, paramsJson, cutoffs, singleTracks, snapshotTimes, formData, setFormData, importParams, exportParams, saveParams, addCutoff, removeCutoff, updateCutoff, addTrack, removeTrack, updateTrack, addSnapshotTime, removeSnapshotTime, updateSnapshotTime }) {
   return (
     <div id="setup" className="tab-content active">
       <div className="section">
@@ -24,19 +24,49 @@ function SetupTab({ selectGPXFile, courseCsvPath, simulationCsvPath, paramsJson,
             <div className="form-grid">
               <div className="form-group">
                 <label>Number of Runners:</label>
-                <input type="number" id="runners" min="1" max="5000" defaultValue="500" />
+                <input
+                  type="number"
+                  id="runners"
+                  min="1"
+                  max="5000"
+                  value={formData.runners}
+                  onChange={(e) => setFormData(prev => ({ ...prev, runners: parseInt(e.target.value) || 0 }))}
+                />
               </div>
               <div className="form-group">
                 <label>Average Pace (min/km):</label>
-                <input type="number" id="avgPace" min="5" max="20" step="0.1" defaultValue="11" />
+                <input
+                  type="number"
+                  id="avgPace"
+                  min="5"
+                  max="20"
+                  step="0.1"
+                  value={formData.avgPace}
+                  onChange={(e) => setFormData(prev => ({ ...prev, avgPace: parseFloat(e.target.value) || 0 }))}
+                />
               </div>
               <div className="form-group">
                 <label>Pace Standard Deviation:</label>
-                <input type="number" id="stdDev" min="0" max="5" step="0.1" defaultValue="1.5" />
+                <input
+                  type="number"
+                  id="stdDev"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={formData.stdDev}
+                  onChange={(e) => setFormData(prev => ({ ...prev, stdDev: parseFloat(e.target.value) || 0 }))}
+                />
               </div>
               <div className="form-group">
                 <label>Time Limit (hours):</label>
-                <input type="number" id="timeLimit" min="1" max="48" defaultValue="26" />
+                <input
+                  type="number"
+                  id="timeLimit"
+                  min="1"
+                  max="48"
+                  value={formData.timeLimit}
+                  onChange={(e) => setFormData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 0 }))}
+                />
               </div>
             </div>
           </div>
@@ -46,11 +76,25 @@ function SetupTab({ selectGPXFile, courseCsvPath, simulationCsvPath, paramsJson,
             <div className="form-grid">
               <div className="form-group">
                 <label>Number of Wave Groups:</label>
-                <input type="number" id="waveGroups" min="0" max="20" defaultValue="0" />
+                <input
+                  type="number"
+                  id="waveGroups"
+                  min="0"
+                  max="20"
+                  value={formData.waveGroups}
+                  onChange={(e) => setFormData(prev => ({ ...prev, waveGroups: parseInt(e.target.value) || 0 }))}
+                />
               </div>
               <div className="form-group">
                 <label>Interval Between Waves (minutes):</label>
-                <input type="number" id="waveInterval" min="0" max="60" defaultValue="0" />
+                <input
+                  type="number"
+                  id="waveInterval"
+                  min="0"
+                  max="60"
+                  value={formData.waveInterval}
+                  onChange={(e) => setFormData(prev => ({ ...prev, waveInterval: parseInt(e.target.value) || 0 }))}
+                />
               </div>
             </div>
           </div>
@@ -136,11 +180,25 @@ function SetupTab({ selectGPXFile, courseCsvPath, simulationCsvPath, paramsJson,
             <div className="form-grid">
               <div className="form-group">
                 <label>Animation Time Step (minutes):</label>
-                <input type="number" id="timeStep" min="1" max="60" defaultValue="15" />
+                <input
+                  type="number"
+                  id="timeStep"
+                  min="1"
+                  max="60"
+                  value={formData.timeStep}
+                  onChange={(e) => setFormData(prev => ({ ...prev, timeStep: parseInt(e.target.value) || 0 }))}
+                />
               </div>
               <div className="form-group">
                 <label>Max Runners to Display:</label>
-                <input type="number" id="maxRunners" min="10" max="2000" defaultValue="500" />
+                <input
+                  type="number"
+                  id="maxRunners"
+                  min="10"
+                  max="2000"
+                  value={formData.maxRunners}
+                  onChange={(e) => setFormData(prev => ({ ...prev, maxRunners: parseInt(e.target.value) || 0 }))}
+                />
               </div>
             </div>
             <div className="form-group">

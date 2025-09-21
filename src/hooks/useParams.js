@@ -16,6 +16,18 @@ export function useParams() {
   ]);
   const [snapshotTimes, setSnapshotTimes] = useState([]);
 
+  // Form state
+  const [formData, setFormData] = useState({
+    runners: 500,
+    avgPace: 11,
+    stdDev: 1.5,
+    timeLimit: 26,
+    waveGroups: 0,
+    waveInterval: 0,
+    timeStep: 15,
+    maxRunners: 500
+  });
+
   useEffect(() => {
     loadParams();
   }, []);
@@ -180,26 +192,17 @@ export function useParams() {
 
   const generateJsonFromForm = () => {
     try {
-      const runners = parseInt(document.getElementById('runners').value) || 500;
-      const avgPace = parseFloat(document.getElementById('avgPace').value) || 11;
-      const stdDev = parseFloat(document.getElementById('stdDev').value) || 1.5;
-      const timeLimit = parseInt(document.getElementById('timeLimit').value) || 26;
-      const waveGroups = parseInt(document.getElementById('waveGroups').value) || 3;
-      const waveInterval = parseInt(document.getElementById('waveInterval').value) || 10;
-      const timeStep = parseInt(document.getElementById('timeStep').value) || 15;
-      const maxRunners = parseInt(document.getElementById('maxRunners').value) || 500;
-
       const params = {
         simulation: {
           settings: {
-            runners: runners,
-            avg_pace_min_per_km: avgPace,
-            std_dev_pace: stdDev,
-            time_limit_hours: timeLimit
+            runners: formData.runners,
+            avg_pace_min_per_km: formData.avgPace,
+            std_dev_pace: formData.stdDev,
+            time_limit_hours: formData.timeLimit
           },
           wave_start: {
-            groups: waveGroups,
-            interval_minutes: waveInterval
+            groups: formData.waveGroups,
+            interval_minutes: formData.waveInterval
           },
           cutoffs: cutoffs.filter(c => c.distance && c.time).map(c => ({
             distance_km: parseFloat(c.distance),
@@ -213,7 +216,7 @@ export function useParams() {
         analysis: {
           runner_distribution: {
             snapshot_times_hours: snapshotTimes.filter(t => t).map(t => parseFloat(t)),
-            output_filename: `runner_distribution_snapshot_${runners}.png`
+            output_filename: `runner_distribution_snapshot_${formData.runners}.png`
           },
           aid_station: {
             stations_km: cutoffs.slice(0, 3).map(c => parseFloat(c.distance)),
@@ -221,8 +224,8 @@ export function useParams() {
           },
           dot_animation: {
             output_filename: "dot_animation.html",
-            time_step_minutes: timeStep,
-            max_runners_to_display: maxRunners
+            time_step_minutes: formData.timeStep,
+            max_runners_to_display: formData.maxRunners
           }
         }
       };
@@ -238,15 +241,21 @@ export function useParams() {
       const params = JSON.parse(jsonText);
 
       if (params.simulation?.settings) {
-        document.getElementById('runners').value = params.simulation.settings.runners || 500;
-        document.getElementById('avgPace').value = params.simulation.settings.avg_pace_min_per_km || 11;
-        document.getElementById('stdDev').value = params.simulation.settings.std_dev_pace || 1.5;
-        document.getElementById('timeLimit').value = params.simulation.settings.time_limit_hours || 26;
+        setFormData(prev => ({
+          ...prev,
+          runners: params.simulation.settings.runners || 500,
+          avgPace: params.simulation.settings.avg_pace_min_per_km || 11,
+          stdDev: params.simulation.settings.std_dev_pace || 1.5,
+          timeLimit: params.simulation.settings.time_limit_hours || 26
+        }));
       }
 
       if (params.simulation?.wave_start) {
-        document.getElementById('waveGroups').value = params.simulation.wave_start.groups ?? 0;
-        document.getElementById('waveInterval').value = params.simulation.wave_start.interval_minutes ?? 0;
+        setFormData(prev => ({
+          ...prev,
+          waveGroups: params.simulation.wave_start.groups ?? 0,
+          waveInterval: params.simulation.wave_start.interval_minutes ?? 0
+        }));
       }
 
       if (params.simulation?.cutoffs) {
@@ -262,8 +271,11 @@ export function useParams() {
       }
 
       if (params.analysis?.dot_animation) {
-        document.getElementById('timeStep').value = params.analysis.dot_animation.time_step_minutes || 15;
-        document.getElementById('maxRunners').value = params.analysis.dot_animation.max_runners_to_display || 500;
+        setFormData(prev => ({
+          ...prev,
+          timeStep: params.analysis.dot_animation.time_step_minutes || 15,
+          maxRunners: params.analysis.dot_animation.max_runners_to_display || 500
+        }));
       }
 
       if (params.analysis?.runner_distribution?.snapshot_times_hours) {
@@ -284,6 +296,8 @@ export function useParams() {
     cutoffs,
     singleTracks,
     snapshotTimes,
+    formData,
+    setFormData,
     importParams,
     exportParams,
     saveParams,

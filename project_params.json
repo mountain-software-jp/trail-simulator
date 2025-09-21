@@ -24,7 +24,13 @@
   },
   "analysis": {
     "runner_distribution": {
-      "snapshot_times_hours": [],
+      "snapshot_times_hours": [
+        1,
+        3,
+        10.5,
+        18,
+        26
+      ],
       "output_filename": "runner_distribution_snapshot_500.png"
     },
     "aid_station": {

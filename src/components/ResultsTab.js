@@ -1,11 +1,15 @@
 import React from 'react';
 
-function ResultsTab({ runAnalysis }) {
+function ResultsTab({ runAnalysis, isRunning, progressText }) {
   return (
     <div id="results" className="tab-content active">
       <div className="section">
         <h2>Step 4: Analysis Results</h2>
-        <button onClick={runAnalysis}>Run Analysis</button>
+        <button onClick={runAnalysis} disabled={isRunning}>Run Analysis</button>
+        <div className="progress" id="analysisProgress" style={{ display: isRunning ? 'block' : 'none' }}>
+          <progress value="0" max="100"></progress>
+          <span id="analysisProgressText">{progressText}</span>
+        </div>
         <div id="analysisOutput" className="output"></div>
         <div id="resultsContainer">
           <h3 style={{ color: '#2c3e50', marginBottom: '20px', fontSize: '1.3em' }}>Generated Files</h3>
