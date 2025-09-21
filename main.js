@@ -16,7 +16,7 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile('dist/index.html');
 
   // 開発時はコメントアウトを外す
   // mainWindow.webContents.openDevTools();
