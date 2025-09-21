@@ -1,0 +1,24 @@
+{
+  "name": "gpx-monte-carlo",
+  "version": "1.0.0",
+  "description": "[Japanese/日本語](README_JA.md)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mountain-software-jp/trail-simulator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mountain-software-jp/trail-simulator/issues"
+  },
+  "homepage": "https://github.com/mountain-software-jp/trail-simulator#readme",
+  "devDependencies": {
+    "electron": "^38.1.2"
+  }
+}

@@ -1,4 +1,6 @@
 *.csv
 *.gpx
 *.html
+*.png
 venv/
+node_modules/
