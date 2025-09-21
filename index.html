@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trail Running Race Congestion Simulator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            font-weight: 300;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 5px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-button {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 15px 25px;
+            cursor: pointer;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-button:hover {
+            color: #495057;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #007bff;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+        }
+
+        .section h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin-right: 12px;
+            border-radius: 2px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 8px 4px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .file-input {
+            margin-bottom: 15px;
+        }
+
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .progress {
+            display: none;
+            margin-top: 15px;
+        }
+
+        progress {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e9ecef;
+        }
+
+        progress::-webkit-progress-bar {
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+
+        progress::-webkit-progress-value {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 4px;
+        }
+
+        .results-grid {
+            display: grid;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .result-item h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+
+        .result-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-item iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Trail Running Race Congestion Simulator</h1>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('setup')">Setup</button>
+            <button class="tab-button" onclick="showTab('simulation')">Simulation</button>
+            <button class="tab-button" onclick="showTab('results')">Results</button>
+        </div>
+
+        <div id="setup" class="tab-content active">
+            <div class="section">
+                <h2>Step 1: Create Course Data from GPX File</h2>
+                <div class="file-input">
+                    <label>Select GPX File:</label>
+                    <input type="text" id="gpxFile" readonly>
+                    <button onclick="selectGPXFile()">Choose File</button>
+                </div>
+                <button onclick="parseGPX()">Create Course Data</button>
+                <div id="parseOutput" class="output"></div>
+            </div>
+
+            <div class="section">
+                <h2>Step 2: Project Parameters Configuration</h2>
+                <label>Parameters JSON:</label>
+                <textarea id="paramsJson" rows="20"></textarea>
+                <button onclick="loadParams()">Load Default Parameters</button>
+                <button onclick="saveParams()">Save Parameters</button>
+            </div>
+        </div>
+
+        <div id="simulation" class="tab-content">
+            <div class="section">
+                <h2>Step 3: Run Simulation</h2>
+                <button id="runSimBtn" onclick="runSimulation()">Run Simulation</button>
+                <div class="progress" id="simProgress">
+                    <progress value="0" max="100"></progress>
+                    <span id="progressText">Preparing...</span>
+                </div>
+                <div id="simOutput" class="output"></div>
+            </div>
+        </div>
+
+        <div id="results" class="tab-content">
+            <div class="section">
+                <h2>Step 4: Analysis Results</h2>
+                <button onclick="runAnalysis()">Run Analysis</button>
+                <div id="analysisOutput" class="output"></div>
+                <div id="resultsContainer">
+                    <h3 style="color: #2c3e50; margin-bottom: 20px; font-size: 1.3em;">Generated Files</h3>
+                    <div class="results-grid" id="imageContainer"></div>
+                    <div class="results-grid" id="animationContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let courseCsvPath = '';
+        let simulationCsvPath = '';
+
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-button');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            buttons.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function selectGPXFile() {
+            const result = await window.electronAPI.selectFile({
+                filters: [{ name: 'GPX Files', extensions: ['gpx'] }]
+            });
+            if (!result.canceled) {
+                document.getElementById('gpxFile').value = result.filePaths[0];
+            }
+        }
+
+        async function parseGPX() {
+            const gpxPath = document.getElementById('gpxFile').value;
+            if (!gpxPath) {
+                alert('Please select a GPX file.');
+                return;
+            }
+
+            try {
+                const output = await window.electronAPI.runPythonScript('gpx_parser.py', [gpxPath]);
+                courseCsvPath = gpxPath.replace('.gpx', '_course_data.csv');
+                document.getElementById('parseOutput').textContent = output;
+                alert('Course data created successfully.');
+            } catch (error) {
+                document.getElementById('parseOutput').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function loadParams() {
+            try {
+                const result = await window.electronAPI.readFile('project_params.json');
+                if (result.success) {
+                    document.getElementById('paramsJson').value = result.content;
+                } else {
+                    // Use default parameters
+                    loadDefaultParams();
+                }
+            } catch (error) {
+                loadDefaultParams();
+            }
+        }
+
+        function loadDefaultParams() {
+            const defaultParams = {
+                "simulation": {
+                    "settings": {
+                        "runners": 500,
+                        "avg_pace_min_per_km": 12,
+                        "std_dev_pace": 1.5,
+                        "time_limit_hours": 26
+                    },
+                    "wave_start": {
+                        "groups": 3,
+                        "interval_minutes": 10
+                    },
+                    "cutoffs": [
+                        {"distance_km": 39, "time_hours": 10},
+                        {"distance_km": 66, "time_hours": 15}
+                    ],
+                    "single_track_sections": [
+                        {"range_km": [5, 8], "capacity": 2}
+                    ]
+                },
+                "analysis": {
+                    "runner_distribution": {
+                        "snapshot_times_hours": [5, 10, 15, 20],
+                        "output_filename": "runner_distribution_snapshot.png"
+                    },
+                    "aid_station": {
+                        "stations_km": [39, 66],
+                        "output_filename": "aid_station_congestion.png"
+                    },
+                    "dot_animation": {
+                        "output_filename": "dot_animation.html",
+                        "time_step_minutes": 15,
+                        "max_runners_to_display": 500
+                    }
+                }
+            };
+            document.getElementById('paramsJson').value = JSON.stringify(defaultParams, null, 2);
+        }
+
+        async function saveParams() {
+            const params = document.getElementById('paramsJson').value;
+            try {
+                JSON.parse(params); // Validation
+                const result = await window.electronAPI.writeFile('project_params.json', params);
+                if (result.success) {
+                    alert('Parameters saved successfully.');
+                } else {
+                    alert('Failed to save: ' + result.error);
+                }
+            } catch (error) {
+                alert('Invalid JSON format.');
+            }
+        }
+
+        async function runSimulation() {
+            if (!courseCsvPath) {
+                alert('Please create course data first.');
+                return;
+            }
+
+            const btn = document.getElementById('runSimBtn');
+            const progress = document.getElementById('simProgress');
+            const progressText = document.getElementById('progressText');
+
+            btn.disabled = true;
+            progress.style.display = 'block';
+            progressText.textContent = 'Running simulation...';
+
+            try {
+                const output = await window.electronAPI.runPythonScript('single_track_simulation.py', [courseCsvPath, 'project_params.json']);
+                simulationCsvPath = 'congestion_sim_results_500runners.csv'; // Assumed
+                document.getElementById('simOutput').textContent = output;
+                progressText.textContent = 'Completed';
+            } catch (error) {
+                document.getElementById('simOutput').textContent = 'Error: ' + error.message;
+                progressText.textContent = 'Error';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function runAnalysis() {
+            if (!simulationCsvPath) {
+                alert('Please run simulation first.');
+                return;
+            }
+
+            try {
+                // Runner distribution analysis
+                const distOutput = await window.electronAPI.runPythonScript('runner_distribution_analysis.py', [simulationCsvPath, courseCsvPath, 'project_params.json']);
+                // Aid station analysis
+                const aidOutput = await window.electronAPI.runPythonScript('aid_station_analysis.py', [simulationCsvPath, 'project_params.json']);
+                // Dot animation
+                const animOutput = await window.electronAPI.runPythonScript('create_dot_animation.py', [simulationCsvPath, courseCsvPath, 'project_params.json']);
+
+                document.getElementById('analysisOutput').textContent = distOutput + '\n' + aidOutput + '\n' + animOutput;
+
+                // Check and display generated files
+                await displayResults();
+            } catch (error) {
+                document.getElementById('analysisOutput').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function displayResults() {
+            const imageContainer = document.getElementById('imageContainer');
+            const animationContainer = document.getElementById('animationContainer');
+
+            imageContainer.innerHTML = '';
+            animationContainer.innerHTML = '';
+
+            // Check and display image files
+            const imageFiles = ['runner_distribution_snapshot_500.png', 'aid_station_congestion.png'];
+            for (const file of imageFiles) {
+                const exists = await window.electronAPI.fileExists(file);
+                if (exists) {
+                    const displayName = file.replace(/_/g, ' ').replace('.png', '').replace(/\b\w/g, l => l.toUpperCase());
+                    imageContainer.innerHTML += `<div class="result-item"><h4>${displayName}</h4><img src="${file}" alt="${file}"></div>`;
+                }
+            }
+
+            // Check and display animation file
+            const animationFile = 'dot_animation.html';
+            const animExists = await window.electronAPI.fileExists(animationFile);
+            if (animExists) {
+                animationContainer.innerHTML = `<div class="result-item"><h4>Dot Animation</h4><iframe src="${animationFile}"></iframe></div>`;
+            }
+        }
+
+        // Initialize
+        loadParams();
+    </script>
+</body>
+</html>

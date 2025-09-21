@@ -1,6 +1,6 @@
 *.csv
 *.gpx
-*.html
 *.png
+dot_animation.html
 venv/
 node_modules/
