@@ -73,8 +73,41 @@ function App() {
       return;
     }
 
-    generateJsonFromForm();
-    const params = paramsJson;
+    // 既存の結果がある場合、警告を表示
+    if (simulationCsvPath) {
+      const confirmed = window.confirm('Running simulation again will clear the results. Continue?');
+      if (!confirmed) {
+        return;
+      }
+      // 既存のファイルを削除
+      const filesToDelete = [
+        simulationCsvPath,
+        `runner_distribution_snapshot_${formData.runners}.png`,
+        'aid_station_congestion.png',
+        'dot_animation.html'
+      ];
+      for (const file of filesToDelete) {
+        if (file) {
+          try {
+            await window.electronAPI.deleteFile(file);
+          } catch (error) {
+            // ファイルが存在しない場合は無視
+          }
+        }
+      }
+      // 結果コンテナをクリア
+      const imageContainer = document.getElementById('imageContainer');
+      if (imageContainer) imageContainer.innerHTML = '';
+      const animationContainer = document.getElementById('animationContainer');
+      if (animationContainer) animationContainer.innerHTML = '';
+      const analysisOutput = document.getElementById('analysisOutput');
+      if (analysisOutput) analysisOutput.textContent = '';
+    }
+
+    const params = generateJsonFromForm();
+    if (!params) {
+      return;
+    }
     try {
       await window.electronAPI.writeFile('project_params.json', params);
     } catch (error) {
@@ -92,7 +125,7 @@ function App() {
 
     try {
       const output = await window.electronAPI.runPythonScript('single_track_simulation.py', [courseCsvPath, 'project_params.json']);
-      setSimulationCsvPath('congestion_sim_results_500runners.csv');
+      setSimulationCsvPath(`congestion_sim_results_${formData.runners}runners.csv`);
       document.getElementById('simOutput').textContent = output;
       progressText.textContent = 'Completed';
     } catch (error) {
@@ -212,6 +245,8 @@ function App() {
           runAnalysis={runAnalysis}
           isRunning={isAnalysisRunning}
           progressText={analysisProgressText}
+          displayResults={displayResults}
+          simulationCsvPath={simulationCsvPath}
         />
       )}
     </div>

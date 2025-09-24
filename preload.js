@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   writeFile: (filePath, content) => ipcRenderer.invoke('write-file', filePath, content),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
   fileExists: (filePath) => ipcRenderer.invoke('file-exists', filePath),
+  deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
   getAppPath: () => ipcRenderer.invoke('get-app-path')
 });

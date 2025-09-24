@@ -110,6 +110,16 @@ ipcMain.handle('file-exists', async (event, filePath) => {
   }
 });
 
+// ファイル削除
+ipcMain.handle('delete-file', async (event, filePath) => {
+  try {
+    await fs.unlink(filePath);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 // アプリケーションパス取得
 ipcMain.handle('get-app-path', async (event) => {
   return app.getAppPath();

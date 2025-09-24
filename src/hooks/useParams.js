@@ -102,8 +102,10 @@ export function useParams() {
   };
 
   const exportParams = () => {
-    generateJsonFromForm();
-    const params = paramsJson;
+    const params = generateJsonFromForm();
+    if (!params) {
+      return;
+    }
     try {
       JSON.parse(params);
       window.electronAPI.saveFile({
@@ -130,8 +132,10 @@ export function useParams() {
   };
 
   const saveParams = () => {
-    generateJsonFromForm();
-    const params = paramsJson;
+    const params = generateJsonFromForm();
+    if (!params) {
+      return;
+    }
     try {
       JSON.parse(params);
       window.electronAPI.writeFile('project_params.json', params).then(result => {
@@ -230,9 +234,12 @@ export function useParams() {
         }
       };
 
-      setParamsJson(JSON.stringify(params, null, 2));
+      const json = JSON.stringify(params, null, 2);
+      setParamsJson(json);
+      return json;
     } catch (error) {
       alert('Error in generateJsonFromForm: ' + error.message);
+      return null;
     }
   };
 

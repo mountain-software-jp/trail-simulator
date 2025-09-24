@@ -1,8 +1,8 @@
 {
   "simulation": {
     "settings": {
-      "runners": 500,
-      "avg_pace_min_per_km": 11.5,
+      "runners": 1200,
+      "avg_pace_min_per_km": 12,
       "std_dev_pace": 1.5,
       "time_limit_hours": 26
     },
@@ -27,22 +27,29 @@
     "single_track_sections": [
       {
         "range_km": [
+          1,
+          2
+        ],
+        "capacity": 2
+      },
+      {
+        "range_km": [
           2,
           8
         ],
-        "capacity": 2
+        "capacity": 1
       },
       {
         "range_km": [
           8,
-          9.2
+          1.2
         ],
         "capacity": 2
       },
       {
         "range_km": [
-          19,
-          20
+          17.5,
+          27.7
         ],
         "capacity": 1
       }
@@ -57,7 +64,7 @@
         16.2,
         24
       ],
-      "output_filename": "runner_distribution_snapshot_500.png"
+      "output_filename": "runner_distribution_snapshot_1200.png"
     },
     "aid_station": {
       "stations_km": [

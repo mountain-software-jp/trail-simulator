@@ -1,6 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
-function ResultsTab({ runAnalysis, isRunning, progressText }) {
+function ResultsTab({ runAnalysis, isRunning, progressText, displayResults, simulationCsvPath }) {
+  useEffect(() => {
+    if (simulationCsvPath) {
+      displayResults();
+    }
+  }, [displayResults, simulationCsvPath]);
+
   return (
     <div id="results" className="tab-content active">
       <div className="section">
